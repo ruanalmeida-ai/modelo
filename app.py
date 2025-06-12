@@ -4,8 +4,6 @@ from streamlit_folium import folium_static
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from shapely.geometry import Point
-import json
 
 # Configuração da página
 st.set_page_config(
@@ -103,7 +101,7 @@ def create_map():
     # Adicionar camada Credi_geo.geojson com dados filtrados
     if not gdf_credi_filtered.empty:
         folium.GeoJson(
-            gdf_credi_filtered,
+            gdf_credi_filtered.to_json(),  # Correção aqui: converter para JSON string
             name="CrediGeo",
             style_function=lambda x: {
                 'fillColor': 'blue',
@@ -219,4 +217,4 @@ st.dataframe(
 
 # Rodapé
 st.markdown("---")
-st.markdown("Desenvolvido com Streamlit, Folium e GeoPandas") 
+st.markdown("Desenvolvido com Streamlit, Folium e GeoPandas")
