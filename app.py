@@ -5,78 +5,236 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 
-# Configuração da página
+# ── Configuração da página ──────────────────────────────────────────────────
 st.set_page_config(
-    page_title="WebGIS Interativo",
+    page_title="WebGIS | Crédito Rural",
     page_icon="🗺️",
     layout="wide"
 )
 
-# Título e descrição
-st.title("🗺️ WebGIS Interativo")
+# ── CSS personalizado ───────────────────────────────────────────────────────
 st.markdown("""
-    Bem-vindo ao seu WebGIS interativo! Aqui você pode visualizar e analisar dados geoespaciais.
-""")
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-# Carregar polígono do município de Ji-Paraná
+/* Reset geral */
+* { font-family: 'Inter', sans-serif; }
+
+/* Fundo da página */
+.stApp {
+    background: #0f1117;
+    color: #e2e8f0;
+}
+
+/* Cabeçalho principal */
+.main-header {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0f1117 100%);
+    border-bottom: 1px solid #2d3748;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+}
+.main-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f7fafc;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+.main-header p {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0.3rem 0 0 0;
+}
+
+/* Painel de filtros */
+.filter-panel {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+}
+.filter-panel-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4a90d9;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.filter-panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #2d3748;
+}
+
+/* Cards de métricas */
+.metric-card {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+.metric-card:hover { border-color: #4a90d9; }
+.metric-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.4rem;
+}
+.metric-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #f7fafc;
+    font-family: 'JetBrains Mono', monospace;
+}
+.metric-value.green { color: #68d391; }
+.metric-value.blue  { color: #63b3ed; }
+.metric-value.yellow{ color: #f6e05e; }
+.metric-value.teal  { color: #81e6d9; }
+
+/* Subtítulos de seção */
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a0aec0;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #2d3748;
+    margin-bottom: 1rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #13161f !important;
+    border-right: 1px solid #2d3748;
+}
+section[data-testid="stSidebar"] .stMarkdown p {
+    color: #a0aec0;
+    font-size: 0.85rem;
+}
+
+/* Sliders */
+.stSlider > div > div > div { background: #4a90d9 !important; }
+
+/* Dataframe */
+.stDataFrame { border-radius: 10px; overflow: hidden; }
+
+/* Esconder elementos padrão do Streamlit */
+#MainMenu, footer, header { visibility: hidden; }
+div[data-testid="stToolbar"] { display: none; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Cabeçalho ───────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="main-header">
+    <h1>🗺️ WebGIS · Crédito Rural</h1>
+    <p>Visualização e análise de operações de crédito rural — Ji-Paraná, Rondônia</p>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Carregar dados ──────────────────────────────────────────────────────────
 @st.cache_data
 def load_jipa():
-    gdf = gpd.read_file("data/Jipa.geojson")
-    return gdf
+    return gpd.read_file("data/Jipa.geojson")
 
-gdf_jipa = load_jipa()
-
-# Carregar camada adicional: Credi_geo.geojson
 @st.cache_data
 def load_credi():
     gdf = gpd.read_file("data/Credi_geo.geojson")
+    gdf['dt_emissao'] = pd.to_datetime(gdf['dt_emissao'])
     return gdf
 
+gdf_jipa  = load_jipa()
 gdf_credi = load_credi()
 
-# Sidebar para controles
-st.sidebar.header("Estatísticas de Crédito Rural")
-total_valor = gdf_credi["vl_parc_cr"].sum()
-total_area = gdf_credi["vl_area_in"].sum()
-st.sidebar.write(f"Total de Crédito: R$ {total_valor:,.2f}")
-st.sidebar.write(f"Área Total: {total_area:,.2f} hectares")
+# ── Sidebar: resumo geral ────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 📊 Resumo Geral")
+    st.markdown(f"**Total de registros:** {len(gdf_credi):,}")
+    st.markdown(f"**Crédito total:** R$ {gdf_credi['vl_parc_cr'].sum():,.2f}")
+    st.markdown(f"**Área total:** {gdf_credi['vl_area_in'].sum():,.2f} ha")
+    st.markdown("---")
+    st.markdown("**Período coberto**")
+    st.markdown(f"{gdf_credi['dt_emissao'].min().strftime('%d/%m/%Y')} → {gdf_credi['dt_emissao'].max().strftime('%d/%m/%Y')}")
 
-# Criar dados de exemplo (pontos aleatórios no Brasil)
-@st.cache_data
-def generate_sample_data():
-    # Coordenadas aproximadas do Brasil
-    lat_min, lat_max = -33.0, 5.0
-    lon_min, lon_max = -74.0, -34.0
-    
-    # Gerar 100 pontos aleatórios
-    n_points = 100
-    lats = np.random.uniform(lat_min, lat_max, n_points)
-    lons = np.random.uniform(lon_min, lon_max, n_points)
-    
-    # Criar DataFrame com os pontos
-    data = {
-        'latitude': lats,
-        'longitude': lons,
-        'valor': np.random.uniform(100, 1000, n_points),
-        'categoria': np.random.choice(['A', 'B', 'C'], n_points)
-    }
-    
-    return pd.DataFrame(data)
+# ── Painel de filtros ────────────────────────────────────────────────────────
+st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
+st.markdown('<div class="filter-panel-title">⚙ Filtros</div>', unsafe_allow_html=True)
 
-# Carregar dados
-df = generate_sample_data()
+col1, col2, col3 = st.columns([1.2, 1, 1])
 
-# Criar mapa base
+with col1:
+    min_date = gdf_credi['dt_emissao'].min().date()
+    max_date = gdf_credi['dt_emissao'].max().date()
+    selected_date = st.date_input(
+        "📅 Período de Emissão",
+        value=(min_date, max_date),
+        min_value=min_date,
+        max_value=max_date,
+        help="Selecione o intervalo de datas para filtrar as operações"
+    )
+
+with col2:
+    min_valor = float(gdf_credi['vl_parc_cr'].min())
+    max_valor = float(gdf_credi['vl_parc_cr'].max())
+    valor_range = st.slider(
+        "💰 Valor do Crédito (R$)",
+        min_value=min_valor,
+        max_value=max_valor,
+        value=(min_valor, max_valor),
+        format="R$ %.0f",
+        help="Filtre pelo valor da parcela de crédito"
+    )
+
+with col3:
+    min_area = float(gdf_credi['vl_area_in'].min())
+    max_area = float(gdf_credi['vl_area_in'].max())
+    area_range = st.slider(
+        "🌿 Área (hectares)",
+        min_value=min_area,
+        max_value=max_area,
+        value=(min_area, max_area),
+        format="%.1f ha",
+        help="Filtre pelo tamanho da área financiada"
+    )
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ── Aplicar filtros ──────────────────────────────────────────────────────────
+if len(selected_date) == 2:
+    mask = (
+        (gdf_credi['dt_emissao'].dt.date >= selected_date[0]) &
+        (gdf_credi['dt_emissao'].dt.date <= selected_date[1]) &
+        (gdf_credi['vl_parc_cr'] >= valor_range[0]) &
+        (gdf_credi['vl_parc_cr'] <= valor_range[1]) &
+        (gdf_credi['vl_area_in'] >= area_range[0]) &
+        (gdf_credi['vl_area_in'] <= area_range[1])
+    )
+    gdf_credi_filtered = gdf_credi[mask].copy()
+else:
+    gdf_credi_filtered = gdf_credi.copy()
+
+# ── Mapa ─────────────────────────────────────────────────────────────────────
+st.markdown('<div class="section-title">🗺 Mapa Interativo</div>', unsafe_allow_html=True)
+
 def create_map():
-    # Centralizar no polígono de Ji-Paraná
-    centroid = gdf_jipa.geometry.centroid.iloc[0]
+    centroid = gdf_jipa.geometry.to_crs(epsg=3857).centroid.to_crs(epsg=4326).iloc[0]
     m = folium.Map(
         location=[centroid.y, centroid.x],
         zoom_start=10,
-        tiles="OpenStreetMap"
+        tiles="CartoDB dark_matter"
     )
-    
-    # Adicionar camada de satélite (Esri)
+
     folium.TileLayer(
         tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         attr='Esri',
@@ -84,137 +242,121 @@ def create_map():
         overlay=False,
         control=True
     ).add_to(m)
-    
-    # Adicionar polígono de Ji-Paraná
+
     folium.GeoJson(
         gdf_jipa,
         name="Ji-Paraná",
         style_function=lambda x: {
             'fillColor': 'none',
-            'color': 'orange',
-            'weight': 2,
+            'color': '#f6ad55',
+            'weight': 2.5,
             'fillOpacity': 0
         },
-        tooltip=folium.GeoJsonTooltip(fields=["NM_MUN", "AREA_KM2"], aliases=["Município:", "Área (km²):"])
+        tooltip=folium.GeoJsonTooltip(
+            fields=["NM_MUN", "AREA_KM2"],
+            aliases=["Município:", "Área (km²):"]
+        )
     ).add_to(m)
 
-    # Adicionar camada Credi_geo.geojson com dados filtrados
     if not gdf_credi_filtered.empty:
+        gdf_plot = gdf_credi_filtered.copy()
+        for col in gdf_plot.select_dtypes(include=["datetime64[ns]", "datetimetz"]).columns:
+            gdf_plot[col] = gdf_plot[col].dt.strftime('%Y-%m-%d')
+
         folium.GeoJson(
-            gdf_credi_filtered.to_json(),  # Correção aqui: converter para JSON string
-            name="CrediGeo",
+            gdf_plot.to_json(),
+            name="Crédito Rural",
             style_function=lambda x: {
-                'fillColor': 'blue',
-                'color': 'blue',
-                'weight': 2,
-                'fillOpacity': 0.3
+                'fillColor': '#4a90d9',
+                'color': '#63b3ed',
+                'weight': 1.5,
+                'fillOpacity': 0.4
             },
             popup=folium.GeoJsonPopup(
                 fields=["dt_emissao", "vl_parc_cr", "vl_area_in"],
-                aliases=["Data de Emissão:", "Valor da Parcela:", "Área:"]
+                aliases=["📅 Emissão:", "💰 Valor (R$):", "🌿 Área (ha):"]
             )
         ).add_to(m)
-    
-    folium.LayerControl().add_to(m)
+
+    folium.LayerControl(collapsed=False).add_to(m)
     return m
 
-# Layout: mapa em cima, estatísticas e gráfico abaixo
-st.subheader("Mapa Interativo")
-
-# Filtros dinâmicos
-col1, col2, col3 = st.columns(3)
-with col1:
-    # Converter datas para datetime
-    gdf_credi['dt_emissao'] = pd.to_datetime(gdf_credi['dt_emissao'])
-    min_date = gdf_credi['dt_emissao'].min()
-    max_date = gdf_credi['dt_emissao'].max()
-    selected_date = st.date_input(
-        "Filtrar por Data",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date
-    )
-
-with col2:
-    min_valor = float(gdf_credi['vl_parc_cr'].min())
-    max_valor = float(gdf_credi['vl_parc_cr'].max())
-    valor_range = st.slider(
-        "Filtrar por Valor (R$)",
-        min_value=min_valor,
-        max_value=max_valor,
-        value=(min_valor, max_valor)
-    )
-
-with col3:
-    min_area = float(gdf_credi['vl_area_in'].min())
-    max_area = float(gdf_credi['vl_area_in'].max())
-    area_range = st.slider(
-        "Filtrar por Área (hectares)",
-        min_value=min_area,
-        max_value=max_area,
-        value=(min_area, max_area)
-    )
-
-# Aplicar filtros
-mask = (
-    (gdf_credi['dt_emissao'].dt.date >= selected_date[0]) &
-    (gdf_credi['dt_emissao'].dt.date <= selected_date[1]) &
-    (gdf_credi['vl_parc_cr'] >= valor_range[0]) &
-    (gdf_credi['vl_parc_cr'] <= valor_range[1]) &
-    (gdf_credi['vl_area_in'] >= area_range[0]) &
-    (gdf_credi['vl_area_in'] <= area_range[1])
-)
-gdf_credi_filtered = gdf_credi[mask].copy()
-# Converter data para string para evitar erro de serialização
-gdf_credi_filtered['dt_emissao'] = gdf_credi_filtered['dt_emissao'].dt.strftime('%Y-%m-%d')
-
-# Criar mapa com dados filtrados
 m = create_map()
-folium_static(m, width=1400, height=700)
+folium_static(m, width=1400, height=650)
 
-# Estatísticas de Crédito Rural
-st.subheader("Estatísticas de Crédito Rural")
+# ── Métricas ──────────────────────────────────────────────────────────────────
+st.markdown('<div class="section-title">📈 Indicadores — Seleção Atual</div>', unsafe_allow_html=True)
 
-# Criar colunas para estatísticas
+total_valor  = gdf_credi_filtered["vl_parc_cr"].sum()
+total_area   = gdf_credi_filtered["vl_area_in"].sum()
+num_op       = len(gdf_credi_filtered)
+media_credito = gdf_credi_filtered["vl_parc_cr"].mean() if num_op > 0 else 0
+
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    total_valor = gdf_credi_filtered["vl_parc_cr"].sum()
-    st.metric("Total de Crédito", f"R$ {total_valor:,.2f}")
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">💰 Total de Crédito</div>
+        <div class="metric-value green">R$ {total_valor:,.0f}</div>
+    </div>""", unsafe_allow_html=True)
 
 with col2:
-    total_area = gdf_credi_filtered["vl_area_in"].sum()
-    st.metric("Área Total", f"{total_area:,.2f} hectares")
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">🌿 Área Total</div>
+        <div class="metric-value teal">{total_area:,.1f} ha</div>
+    </div>""", unsafe_allow_html=True)
 
 with col3:
-    num_operacoes = len(gdf_credi_filtered)
-    st.metric("Número de Operações", f"{num_operacoes:,}")
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">📋 Operações</div>
+        <div class="metric-value blue">{num_op:,}</div>
+    </div>""", unsafe_allow_html=True)
 
 with col4:
-    media_credito = gdf_credi_filtered["vl_parc_cr"].mean()
-    st.metric("Média por Operação", f"R$ {media_credito:,.2f}")
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">📊 Média por Operação</div>
+        <div class="metric-value yellow">R$ {media_credito:,.0f}</div>
+    </div>""", unsafe_allow_html=True)
 
-# Gráficos
-st.subheader("Evolução do Crédito Rural")
-evolucao = gdf_credi_filtered.groupby("dt_emissao")["vl_parc_cr"].sum().reset_index()
-evolucao = evolucao.sort_values("dt_emissao")
-st.line_chart(evolucao.set_index("dt_emissao"))
+st.markdown("<br>", unsafe_allow_html=True)
 
-# Tabela de dados
-st.subheader("Dados de Crédito Rural")
-# Selecionar e renomear colunas para exibição
-tabela = gdf_credi_filtered[["dt_emissao", "vl_parc_cr", "vl_area_in"]].copy()
-tabela.columns = ["Data de Emissão", "Valor do Crédito (R$)", "Área (hectares)"]
-# Formatar valores
-tabela["Valor do Crédito (R$)"] = tabela["Valor do Crédito (R$)"].map("R$ {:,.2f}".format)
-tabela["Área (hectares)"] = tabela["Área (hectares)"].map("{:,.2f}".format)
-# Exibir tabela com paginação
-st.dataframe(
-    tabela,
-    use_container_width=True,
-    hide_index=True
-)
+# ── Gráfico de evolução ────────────────────────────────────────────────────
+st.markdown('<div class="section-title">📉 Evolução do Crédito Rural</div>', unsafe_allow_html=True)
 
-# Rodapé
+if not gdf_credi_filtered.empty:
+    evolucao = (
+        gdf_credi_filtered
+        .assign(dt=gdf_credi_filtered['dt_emissao'].dt.strftime('%Y-%m-%d'))
+        .groupby("dt")["vl_parc_cr"]
+        .sum()
+        .reset_index()
+        .sort_values("dt")
+        .set_index("dt")
+        .rename(columns={"vl_parc_cr": "Valor (R$)"})
+    )
+    st.line_chart(evolucao, height=220)
+else:
+    st.info("Nenhum dado encontrado para os filtros selecionados.")
+
+# ── Tabela ─────────────────────────────────────────────────────────────────
+st.markdown('<div class="section-title">🗃 Registros Filtrados</div>', unsafe_allow_html=True)
+
+if not gdf_credi_filtered.empty:
+    tabela = gdf_credi_filtered[["dt_emissao", "vl_parc_cr", "vl_area_in"]].copy()
+    tabela["dt_emissao"] = tabela["dt_emissao"].dt.strftime('%d/%m/%Y')
+    tabela.columns = ["Data de Emissão", "Valor do Crédito (R$)", "Área (hectares)"]
+    tabela["Valor do Crédito (R$)"] = tabela["Valor do Crédito (R$)"].map("R$ {:,.2f}".format)
+    tabela["Área (hectares)"] = tabela["Área (hectares)"].map("{:,.2f} ha".format)
+    st.dataframe(tabela, use_container_width=True, hide_index=True, height=320)
+
+# ── Rodapé ─────────────────────────────────────────────────────────────────
 st.markdown("---")
-st.markdown("Desenvolvido com Streamlit, Folium e GeoPandas")
+st.markdown(
+    "<p style='text-align:center;color:#4a5568;font-size:0.78rem;'>"
+    "Desenvolvido com Streamlit · Folium · GeoPandas</p>",
+    unsafe_allow_html=True
+)
