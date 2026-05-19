@@ -176,12 +176,28 @@ col1, col2, col3 = st.columns([1.2, 1, 1])
 with col1:
     min_date = gdf_credi['dt_emissao'].min().date()
     max_date = gdf_credi['dt_emissao'].max().date()
-    selected_date = st.date_input(
-        "📅 Período de Emissão",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date,
-        help="Selecione o intervalo de datas para filtrar as operações"
+
+    st.markdown("📅 **Período de Emissão**")
+    c_ini, c_fim = st.columns(2)
+    with c_ini:
+        data_inicio = st.date_input(
+            "Data Inicial",
+            value=min_date,
+            min_value=min_date,
+            max_value=max_date,
+            key="data_inicio",
+            label_visibility="visible"
+        )
+    with c_fim:
+        data_fim = st.date_input(
+            "Data Final",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date,
+            key="data_fim",
+            label_visibility="visible"
+        )
+    selected_date = (data_inicio, data_fim)
     )
 
 with col2:
