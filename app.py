@@ -198,8 +198,7 @@ with col1:
             label_visibility="visible"
         )
     selected_date = (data_inicio, data_fim)
-    )
-
+    
 with col2:
     min_valor = float(gdf_credi['vl_parc_cr'].min())
     max_valor = float(gdf_credi['vl_parc_cr'].max())
