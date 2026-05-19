@@ -369,9 +369,40 @@ if not gdf_credi_filtered.empty:
     st.dataframe(tabela, use_container_width=True, hide_index=True, height=320)
 
 # ── Rodapé ─────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(
-    "<p style='text-align:center;color:#4a5568;font-size:0.78rem;'>"
-    "Desenvolvido com Streamlit · Folium · GeoPandas</p>",
-    unsafe_allow_html=True
-)
+st.markdown("""
+<div style="
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    margin-top: 2rem;
+">
+    <p style="font-size: 0.7rem; font-weight: 600; color: #4a90d9;
+              text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 0.8rem 0;">
+        Desenvolvido por
+    </p>
+    <h3 style="margin: 0 0 1rem 0; color: #f7fafc; font-size: 1.2rem; font-weight: 700;">
+        👨‍💻 Ruan Almeida
+    </h3>
+    <p style="margin: 0 0 1.2rem 0;">
+        <a href="https://www.linkedin.com/in/ruan-almeida-8b8136295/" target="_blank"
+           style="text-decoration: none; color: #63b3ed; font-weight: 600;
+                  font-size: 0.85rem; margin: 0 1rem;
+                  padding: 0.4rem 0.9rem; border: 1px solid #2d3748;
+                  border-radius: 6px; transition: all 0.2s;">
+            🔗 LinkedIn
+        </a>
+        <a href="https://www.instagram.com/consultoriaruan?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank"
+           style="text-decoration: none; color: #f687b3; font-weight: 600;
+                  font-size: 0.85rem; margin: 0 1rem;
+                  padding: 0.4rem 0.9rem; border: 1px solid #2d3748;
+                  border-radius: 6px; transition: all 0.2s;">
+            📷 Instagram
+        </a>
+    </p>
+    <p style="font-size: 0.72rem; color: #4a5568; margin: 0;">
+        Desenvolvido com Streamlit · Folium · GeoPandas
+    </p>
+</div>
+""", unsafe_allow_html=True)
